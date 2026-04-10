@@ -11,7 +11,7 @@ from tqdm import tqdm
 # =========================================================
 FOLDER_PATH = r"G:\내 드라이브\졸논\데이터셋\VIRAT"
 RESULT_DIR = r"C:\Users\이혜원\OneDrive\바탕 화면\졸논\EdgeAI-Realtime-Analytics\hyewon\agent\result"
-CSV_PATH = os.path.join(RESULT_DIR, "experiment_results_0409.csv")
+CSV_PATH = os.path.join(RESULT_DIR, "experiment_results_0410.csv")
 MODEL = YOLO('yolov8n.pt')
 CALIB_FRAMES = 200
 

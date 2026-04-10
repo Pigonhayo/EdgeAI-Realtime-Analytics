@@ -4,106 +4,120 @@ import matplotlib.ticker as mticker
 import seaborn as sns
 import os
 
-# [설정 1] 경로 앞에 r을 붙여서 윈도우 경로 인식을 보장합니다.
-FILE_PATH = r"C:\Users\이혜원\OneDrive\바탕 화면\졸논\EdgeAI-Realtime-Analytics\result\experiment_results_0409.csv"
-OUTPUT_DIR = "./result/plots" # 결과 그래프 저장 폴더
+# =========================================================
+# [설정]
+# =========================================================
+FILE_PATH = r"C:\Users\이혜원\OneDrive\바탕 화면\졸논\EdgeAI-Realtime-Analytics\hyewon\agent\result\0410\experiment_results_0410.csv"
+OUTPUT_DIR = r"C:\Users\이혜원\OneDrive\바탕 화면\졸논\EdgeAI-Realtime-Analytics\hyewon\agent\result\0410"
 
-# [설정 2] 공통 스타일 및 색상 팔레트 정의
-sns.set_theme(style="whitegrid", font_scale=1.1) # 전체 폰트 크기 살짝 키움 (가독성)
+sns.set_theme(style="whitegrid", font_scale=1.1)
 
 order = ['Baseline', 'Uniform(Q20)', 'Proposed (α=0.01)',
          'Proposed (α=0.05)', 'Proposed (α=0.1)', 'Proposed (α=0.2)']
 palette = {
-    'Baseline': '#2c2c2c',       # 검정
-    'Uniform(Q20)': '#aaaaaa',  # 회색
-    'Proposed (α=0.01)': '#1f77b4', # 파랑
-    'Proposed (α=0.05)': '#ff7f0e', # 주황
-    'Proposed (α=0.1)': '#2ca02c',  # 초록
-    'Proposed (α=0.2)': '#d62728'   # 빨강
+    'Baseline': '#2c2c2c',
+    'Uniform(Q20)': '#aaaaaa',
+    'Proposed (α=0.01)': '#1f77b4',
+    'Proposed (α=0.05)': '#ff7f0e',
+    'Proposed (α=0.1)': '#2ca02c',
+    'Proposed (α=0.2)': '#d62728'
 }
 
+# =========================================================
+# [함수 1] 데이터 로드
+# =========================================================
 def load_and_preprocess():
-    """데이터 로드 및 전처리"""
     if not os.path.exists(FILE_PATH):
         raise FileNotFoundError(f"파일을 찾을 수 없습니다: {FILE_PATH}")
-    
     df = pd.read_csv(FILE_PATH)
-    # Case와 Alpha를 조합해 라벨 생성
     df['Case_Label'] = df.apply(
         lambda x: f"Proposed (α={x['Alpha']})" if x['Case'] == 'Proposed' else x['Case'], axis=1
     )
     return df
 
+# =========================================================
+# [함수 2] 라인 그래프 (그래프 1~3)
+# =========================================================
 def save_individual_plot(df, y_col, title, filename, is_pct=False):
-    """개별 그래프 생성 및 저장 함수"""
-    # 1. 그래프 크기 설정 (개별 저장용으로 최적화)
-    plt.figure(figsize=(12, 6)) 
-    
-    # 2. Seaborn lineplot 그리기
-    # 학술용 그래프는 마커 크기(markersize)와 선 굵기(linewidth)를 조금 키우는 것이 좋습니다.
+    plt.figure(figsize=(12, 6))
     ax = sns.lineplot(data=df, x='Video', y=y_col,
-                       hue='Case_Label', hue_order=order,
-                       palette=palette, marker='o', markersize=9, linewidth=2.5)
-    
-    # 3. 그래프 꾸미기 (제목, 축 라벨 등)
+                      hue='Case_Label', hue_order=order,
+                      palette=palette, marker='o', markersize=9, linewidth=2.5)
     plt.title(title, fontsize=15, fontweight='bold', pad=20)
-    
-    # y축 라벨 설정
-    y_label = y_col
-    if y_col == 'Size_MB': y_label = 'Size (MB)'
-    elif y_col == 'Sent_Ratio_Pct': y_label = 'Sent Ratio (%)'
-    elif y_col == 'Det_Recall_Pct': y_label = 'Det Recall (%)'
-    plt.ylabel(y_label, fontsize=12, fontweight='bold')
-    
-    # x축 설정
+
+    y_label_map = {'Size_MB': 'Size (MB)', 'Sent_Ratio_Pct': 'Sent Ratio (%)', 'Det_Recall_Pct': 'Det Recall (%)'}
+    plt.ylabel(y_label_map.get(y_col, y_col), fontsize=12, fontweight='bold')
     plt.xlabel('Video File (VIRAT)', fontsize=12, fontweight='bold')
-    plt.tick_params(axis='x', rotation=45) # 비디오 이름이 겹치지 않게 회전
-    
-    # 퍼센트 단위 설정 (% 기호 추가)
+    plt.tick_params(axis='x', rotation=45)
+
     if is_pct:
-        plt.ylim(-5, 110) # 100% 위쪽 여유 공간
+        plt.ylim(-5, 110)
         ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=100))
-    
-    # 4. 범례(Legend) 설정: 그래프 바깥 오른쪽 상단에 배치
+
     plt.legend(title='Experiment Case', bbox_to_anchor=(1.01, 1), loc='upper left', fontsize=10, title_fontsize=11)
-    
-    # 5. 저장 및 닫기 (tight_layout은 범례가 잘리지 않게 중요함)
     save_path = os.path.join(OUTPUT_DIR, filename)
     plt.tight_layout()
-    plt.savefig(save_path, dpi=200, bbox_inches='tight') # 고해상도(200dpi) 저장
-    plt.close() # 메모리 해제
-    print(f" ✓ 그래프 저장 완료: {save_path}")
+    plt.savefig(save_path, dpi=200, bbox_inches='tight')
+    plt.close()
+    print(f" ✓ 저장 완료: {save_path}")
 
 # =========================================================
-# 메인 실행부
+# [함수 3] 트레이드오프 산점도 (그래프 4)
+# =========================================================
+def save_tradeoff_plot(df):
+    # Proposed 케이스만 필터링
+    proposed_df = df[df['Case'] == 'Proposed'].copy()
+
+    plt.figure(figsize=(8, 6))
+    ax = sns.scatterplot(data=proposed_df, x='Sent_Ratio_Pct', y='Det_Recall_Pct',
+                         hue='Case_Label', hue_order=[o for o in order if 'Proposed' in o],
+                         palette={k: v for k, v in palette.items() if 'Proposed' in k},
+                         s=120, zorder=5)
+
+    # 대각선 기준선 (전송률 = 탐지유지율)
+    plt.plot([0, 100], [0, 100], 'k--', linewidth=1.2, alpha=0.4, label='y = x')
+
+    plt.title('④ Tradeoff: Sent Ratio vs Det Recall (%)', fontsize=14, fontweight='bold', pad=20)
+    plt.xlabel('Sent Ratio (%)', fontsize=11, fontweight='bold')
+    plt.ylabel('Det Recall (%)', fontsize=11, fontweight='bold')
+    plt.xlim(0, 105)
+    plt.ylim(0, 105)
+    ax.xaxis.set_major_formatter(mticker.PercentFormatter(xmax=100))
+    ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=100))
+
+    plt.legend(title='Alpha', bbox_to_anchor=(1.01, 1), loc='upper left', fontsize=10)
+    save_path = os.path.join(OUTPUT_DIR, '04_tradeoff.png')
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=200, bbox_inches='tight')
+    plt.close()
+    print(f" ✓ 저장 완료: {save_path}")
+
+# =========================================================
+# [메인]
 # =========================================================
 if __name__ == "__main__":
     try:
-        # 데이터 폴더 생성
         os.makedirs(OUTPUT_DIR, exist_ok=True)
-        
-        # 데이터 로드
-        experiment_df = load_and_preprocess()
-        print(f"총 {len(experiment_df)}개의 실험 데이터 로드 완료.\n")
-        
-        # --- 그래프 1: 전송 데이터량 (Size_MB) ---
-        save_individual_plot(experiment_df, 'Size_MB', 
-                             '① Transmission Data Size (MB)', 
+        df = load_and_preprocess()
+        print(f"총 {len(df)}개 데이터 로드 완료.\n")
+
+        save_individual_plot(df, 'Size_MB',
+                             '① Transmission Data Size (MB)',
                              '01_transmission_size.png')
-        
-        # --- 그래프 2: 프레임 전송률 (Sent_Ratio_Pct) ---
-        save_individual_plot(experiment_df, 'Sent_Ratio_Pct', 
-                             '② Frame Sent Ratio vs Total Frames (%)', 
+
+        save_individual_plot(df, 'Sent_Ratio_Pct',
+                             '② Frame Sent Ratio vs Total Frames (%)',
                              '02_frame_sent_ratio.png', is_pct=True)
-        
-        # --- 그래프 3: 탐지 정확도 유지율 (Det_Recall_Pct) ← 핵심 ---
-        save_individual_plot(experiment_df, 'Det_Recall_Pct', 
-                             '③ Object Detection Recall vs Baseline (%)', 
+
+        save_individual_plot(df, 'Det_Recall_Pct',
+                             '③ Object Detection Recall vs Baseline (%)',
                              '03_detection_recall.png', is_pct=True)
-        
+
+        save_tradeoff_plot(df)  # ← 별도 함수로 분리
+
         print(f"\n{'='*50}")
-        print(f"모든 개별 그래프가 '{OUTPUT_DIR}' 폴더에 저장되었습니다.")
+        print(f"모든 그래프가 저장되었습니다: {OUTPUT_DIR}")
         print(f"{'='*50}")
 
     except Exception as e:
-        print(f"\n[Error] 오류가 발생했습니다: {e}")
+        print(f"\n[Error] 오류: {e}")
