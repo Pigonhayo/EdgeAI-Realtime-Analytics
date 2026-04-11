@@ -25,5 +25,3 @@ hyewon/agent/**/*.jpg
 hyewon/agent/**/*.png
 hyewon/agent/**/*.mp4
 hyewon/agent/**/*.pth
-# 혹은 그냥 깔끔하게 결과 폴더 통째로 제외
-hyewon/agent/result/
